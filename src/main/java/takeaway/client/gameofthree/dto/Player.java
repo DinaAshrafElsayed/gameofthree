@@ -5,6 +5,8 @@ import java.io.Serializable;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 import lombok.Data;
 
 /**
@@ -12,6 +14,7 @@ import lombok.Data;
  * @author El-sayedD
  *
  */
+@JsonDeserialize(as = Player.class)
 @Data
 public class Player implements Serializable {
 
