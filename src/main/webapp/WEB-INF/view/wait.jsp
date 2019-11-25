@@ -5,23 +5,11 @@
 	<div>
         <div>
             
-            <h2>please wait till other player sends a new value</h2>
+            <h2>please wait till other player sends a new value and use your console to play</h2>
              
         </div>
     </div>
-	<div>
-    <table>
-        <tr>
-            <td>User email :</td>
-            <td><input type="email" id="email" name="email"/></td>
-        </tr>
-
-        </table>
-        <tr>
-           
-        </tr>
-    </table>
-	</div>
+	
 
 </body>
 </html>

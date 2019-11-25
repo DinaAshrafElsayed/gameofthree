@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.view.RedirectView;
 
 import takeaway.client.gameofthree.dto.ChoicesEnum;
 import takeaway.client.gameofthree.dto.GameInvitationResponse;
@@ -119,10 +120,10 @@ public class GameOfThreeController {
 	}
 
 	@GetMapping({ "/receive" })
-	public ModelAndView recieveAValue(@RequestParam int value) {
-		// request.getSession().setAttribute("currValue", value);
-		String redirectURL = "redirect:/playRediect?value=" + value;
-		return new ModelAndView(redirectURL);
+	public RedirectView  recieveAValue(@RequestParam int value) {
+		//TODO make it async and call play with new value no redirection and use console input
+		String redirectURL = "forward:/playRediect?value=" + value;
+		return new RedirectView(redirectURL);
 	}
 
 }
