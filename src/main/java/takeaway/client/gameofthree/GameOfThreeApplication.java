@@ -5,6 +5,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 
+import takeaway.client.gameofthree.util.RandomPortUtil;
+
 @SpringBootApplication
 public class GameOfThreeApplication extends SpringBootServletInitializer {
 
@@ -14,6 +16,7 @@ public class GameOfThreeApplication extends SpringBootServletInitializer {
     }
 
     public static void main(String[] args) {
+    	RandomPortUtil.setRandomPort();
         SpringApplication.run(GameOfThreeApplication.class, args);
     }
 

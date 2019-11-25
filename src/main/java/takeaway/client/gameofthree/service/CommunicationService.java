@@ -1,15 +1,25 @@
 package takeaway.client.gameofthree.service;
 
+import java.util.Arrays;
+import java.util.Set;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import takeaway.client.gameofthree.dto.GameInvitationResponse;
 import takeaway.client.gameofthree.dto.JwtResponse;
+import takeaway.client.gameofthree.dto.PlayRequest;
 import takeaway.client.gameofthree.dto.Player;
 
 @Service
@@ -21,38 +31,95 @@ public class CommunicationService {
 	private String serverPort;
 	@Value("${gameofthree.server.register.path}")
 	private String serverRegisterPath;
+	@Value("${gameofthree.server.availablePlayers.path}")
+	private String serverAvailablePlayersrPath;
+	@Value("${gameofthree.server.invite.Startpath}")
+	private String inviteStartPath;
+	@Value("${gameofthree.server.invite.endpath}")
+	private String inviteEndPath;
+	@Value("${gameofthree.server.play.path}")
+	private String playPath;
 
+	private final String CONTENT_TYPE = "application/json;charset=UTF-8";
 	private final String BEAERER = "Bearer ";
-	private final String HTTP ="http";
+	private final String HTTP = "http";
 
 	@Autowired
 	private RestTemplate restTemplate;
 
 	public JwtResponse registerUser(Player player) {
 		String URI = buildURI(serverRegisterPath);
-		System.out.println("URI"+URI);
-		JwtResponse response = null;
+		JwtResponse jwtResponse = null;
 		try {
 			HttpHeaders headers = new HttpHeaders();
-			headers.set("Content-type", "application/json");
+			headers.set(HttpHeaders.CONTENT_TYPE, CONTENT_TYPE);
+			headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
 			HttpEntity<Player> entity = new HttpEntity<>(player, headers);
-			response = restTemplate.postForObject(URI, player, JwtResponse.class);
-			System.out.println(response.getJwttoken());
-
+			ResponseEntity<JwtResponse> responseEntity = restTemplate.exchange(URI, HttpMethod.POST, entity,
+					JwtResponse.class);
+			jwtResponse = responseEntity.getBody();
+			HttpStatus status = responseEntity.getStatusCode();
+			// TODO use it to handle specific client errors
 		} catch (RestClientException e) {
 			// TODO handle communicationExecption
-			System.out.println("error "+ e.getMessage());
+			System.out.println("error " + e.getMessage());
 		}
-
-		return response;
+		return jwtResponse;
 	}
 
-	/*
-	 * HttpHeaders headers = createHeaders(jwt); HttpEntity<String> entity = new
-	 * HttpEntity<>("body", headers);
-	 */
+	public GameInvitationResponse invitePlayer(String player, String jwt) {
+		String URI = buildURI(inviteStartPath, player, inviteEndPath);
+		HttpEntity<GameInvitationResponse> responseEntity = null;
+		try {
+			HttpHeaders headers = createHeaders(jwt);
+			headers.set(HttpHeaders.CONTENT_TYPE, CONTENT_TYPE);
+			HttpEntity<?> entity = new HttpEntity<Object>(headers);
+			responseEntity = restTemplate.exchange(URI, HttpMethod.GET, entity, GameInvitationResponse.class);
+			// TODO use it to handle specific client errors
+		} catch (RestClientException e) {
+			// TODO handle communicationExecption
+			System.out.println("error " + e.getMessage());
+		}
+
+		return responseEntity.getBody();
+	}
+
+	public void sendNewValueToOtherPlayer(int value) {
+
+	}
+
+	public void play(String jwt, int value) {
+		try {
+			String URI = buildURI(playPath);
+			HttpHeaders headers = createHeaders(jwt);
+			headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
+			PlayRequest request = new PlayRequest();
+			request.setValue(value);
+			HttpEntity<PlayRequest> entity = new HttpEntity<>(request, headers);
+			restTemplate.put(URI, entity);
+		} catch (RestClientException e) {
+			// TODO handle communicationExecption
+			System.out.println("error " + e.getMessage());
+		}
+	}
+
+	public Set<String> getAvaliablePlayers(String jwt) {
+		String URI = buildURI(serverAvailablePlayersrPath);
+		HttpHeaders headers = createHeaders(jwt);
+		headers.set(HttpHeaders.CONTENT_TYPE, CONTENT_TYPE);
+
+		headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+		HttpEntity<?> entity = new HttpEntity<Object>(headers);
+		ResponseEntity<Set<String>> PlayersResponses = restTemplate.exchange(URI, HttpMethod.GET, entity,
+				new ParameterizedTypeReference<Set<String>>() {
+				});
+		return PlayersResponses.getBody();
+	}
+
 	private HttpHeaders createHeaders(String jwt) {
 		return new HttpHeaders() {
+			private static final long serialVersionUID = -3993880285131909883L;
+
 			{
 				String authHeader = BEAERER + jwt;
 				set(HttpHeaders.AUTHORIZATION, authHeader);
@@ -60,9 +127,12 @@ public class CommunicationService {
 		};
 	}
 
-	private String buildURI(String path) {
+	private String buildURI(String... paths) {
 		UriComponentsBuilder builder = UriComponentsBuilder.newInstance();
-		String URI = builder.scheme(HTTP).host(serverIp).port(serverPort).path(path).toUriString();
-		return URI;
+		builder = builder.scheme(HTTP).host(serverIp).port(serverPort);
+		for (String path : paths) {
+			builder = builder.path(path);
+		}
+		return builder.toUriString();
 	}
 }
