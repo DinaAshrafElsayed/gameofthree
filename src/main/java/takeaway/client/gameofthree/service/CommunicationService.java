@@ -19,7 +19,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import takeaway.client.gameofthree.dto.GameInvitationResponse;
 import takeaway.client.gameofthree.dto.JwtResponse;
-import takeaway.client.gameofthree.dto.PlayRequest;
+import takeaway.client.gameofthree.dto.PlayRequestAndResponse;
 import takeaway.client.gameofthree.dto.Player;
 
 @Service
@@ -88,19 +88,21 @@ public class CommunicationService {
 
 	}
 
-	public void play(String jwt, int value) {
+	public int play(String jwt, int value) {
 		try {
 			String URI = buildURI(playPath);
 			HttpHeaders headers = createHeaders(jwt);
 			headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
-			PlayRequest request = new PlayRequest();
+			PlayRequestAndResponse request = new PlayRequestAndResponse();
 			request.setValue(value);
-			HttpEntity<PlayRequest> entity = new HttpEntity<>(request, headers);
-			restTemplate.put(URI, entity);
+			HttpEntity<PlayRequestAndResponse> entity = new HttpEntity<>(request, headers);
+			ResponseEntity<PlayRequestAndResponse> response  = restTemplate.postForEntity(URI, entity,PlayRequestAndResponse.class);
+			value = response.getBody().getValue();
 		} catch (RestClientException e) {
 			// TODO handle communicationExecption
 			System.out.println("error " + e.getMessage());
 		}
+		return value;
 	}
 
 	public Set<String> getAvaliablePlayers(String jwt) {
