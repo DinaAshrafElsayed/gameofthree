@@ -54,6 +54,7 @@ public class GameOfThreeController {
 			throws UnknownHostException {
 		JwtResponse jwtResponse = registerationService.registerPlayer(email);
 		request.getSession().setAttribute("token", jwtResponse.getJwttoken());
+		request.getServletContext().setAttribute("token", jwtResponse.getJwttoken());
 		return "start";
 	}
 

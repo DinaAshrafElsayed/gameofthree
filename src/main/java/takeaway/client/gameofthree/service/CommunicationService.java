@@ -39,6 +39,8 @@ public class CommunicationService {
 	private String inviteEndPath;
 	@Value("${gameofthree.server.play.path}")
 	private String playPath;
+	@Value("${gameofthree.server.unregister.path}")
+	private String unregisterPath;
 
 	private final String CONTENT_TYPE = "application/json;charset=UTF-8";
 	private final String BEAERER = "Bearer ";
@@ -82,6 +84,18 @@ public class CommunicationService {
 		}
 
 		return responseEntity.getBody();
+	}
+	
+	
+	public void unregister(String jwt) {
+		String URI = buildURI(unregisterPath);
+		try {
+			HttpHeaders headers = createHeaders(jwt);
+			HttpEntity<?> entity = new HttpEntity<Object>(headers);
+			restTemplate.delete(URI, entity);
+		} catch (RestClientException e) {
+			System.out.println("error " + e.getMessage());
+		}
 	}
 
 	public void sendNewValueToOtherPlayer(int value) {
