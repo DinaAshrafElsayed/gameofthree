@@ -12,6 +12,7 @@ public class GameOfThreeApplication extends SpringBootServletInitializer {
 
     @Override
     protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+    	application.registerShutdownHook(true);
         return application.sources(GameOfThreeApplication.class);
     }
 
