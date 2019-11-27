@@ -10,6 +10,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import takeaway.client.gameofthree.dto.ChoicesEnum;
 import takeaway.client.gameofthree.dto.PlayRequestAndResponse;
+import takeaway.client.gameofthree.dto.PlayerStatusEnum;
 
 @Service
 public class GameOfThreeService {
@@ -22,26 +23,57 @@ public class GameOfThreeService {
 		int previousVal = (int) request.getSession().getAttribute("currValue");
 		ModelAndView model = new ModelAndView("play");
 		if (ChoicesEnum.AUTOMATIC.name().equalsIgnoreCase(choice)) {
-			value = getAutomaticValue(previousVal);
-			int newValue = communicationService.play(token, value);
-			request.getSession().setAttribute("currValue", newValue);
-			// TODO handle win or lose
-			int nextValue = getAutomaticValue(newValue);
-			model.addObject("message", "the server generate your next input as " + nextValue);
-			model.addObject("value", newValue);
+			model = handleAutomaticCase(request, token, previousVal, model);
 		} else {
-			int tempValue = previousVal + value;
-			if (tempValue % 3 != 0 || (value != 1 && value != 0 && value != -1)) {
-				model.addObject("message", "your input was incorrect please enter");
-				model.addObject("value", previousVal);
+			model = handleManualCase(value, request, token, previousVal, model);
+		}
+		return model;
+	}
+
+	private ModelAndView handleManualCase(Integer value, HttpServletRequest request, String token, int previousVal,
+			ModelAndView model) {
+		int tempValue = previousVal + value;
+		if (tempValue % 3 != 0 || (value != 1 && value != 0 && value != -1)) {
+			model.addObject("message", "your input was incorrect please enter");
+			model.addObject("value", previousVal);
+		} else {
+			value = previousVal + value;
+			PlayRequestAndResponse response = communicationService.play(token, value);
+			if (PlayerStatusEnum.WON == response.getPlayerStatusEnum()) {
+				model = getEndModel(PlayerStatusEnum.WON.getMessage());
+			} else if (PlayerStatusEnum.LOST == response.getPlayerStatusEnum()) {
+				model = getEndModel(PlayerStatusEnum.LOST.getMessage());
 			} else {
-				value = previousVal + value;
-				int newValue = communicationService.play(token, value);
-				request.getSession().setAttribute("currValue", newValue);
-				// TODO handle win or lose
+				request.getSession().setAttribute("currValue", response.getValue());
+				int newValue = response.getValue();
 				model.addObject("value", newValue);
 			}
 		}
+		return model;
+	}
+
+	private ModelAndView handleAutomaticCase(HttpServletRequest request, String token, int previousVal,
+			ModelAndView model) {
+		Integer value;
+		value = getAutomaticValue(previousVal);
+		PlayRequestAndResponse response = communicationService.play(token, value);
+		int newValue = response.getValue();
+		if (PlayerStatusEnum.WON == response.getPlayerStatusEnum()) {
+			model = getEndModel(PlayerStatusEnum.WON.getMessage());
+		} else if (PlayerStatusEnum.LOST == response.getPlayerStatusEnum()) {
+			model = getEndModel(PlayerStatusEnum.LOST.getMessage());
+		} else {
+			request.getSession().setAttribute("currValue", newValue);
+			int nextValue = getAutomaticValue(newValue);
+			model.addObject("message", "the server generate your next input as " + nextValue);
+			model.addObject("value", newValue);
+		}
+		return model;
+	}
+
+	private ModelAndView getEndModel(String message) {
+		ModelAndView model = new ModelAndView("end");
+		model.addObject("message", message);
 		return model;
 	}
 
@@ -64,14 +96,23 @@ public class GameOfThreeService {
 			request.getSession().setAttribute("choice", ChoicesEnum.AUTOMATIC.name());
 		}
 		String token = (String) request.getSession().getAttribute("token");
-		int newValue = communicationService.play(token, initalValue);
-		request.getSession().setAttribute("currValue", newValue);
-		ModelAndView model = new ModelAndView("play");
-		model.addObject("value", newValue);
+		ModelAndView model;
+		PlayRequestAndResponse response = communicationService.play(token, initalValue);
+		if (PlayerStatusEnum.WON == response.getPlayerStatusEnum()) {
+			model = getEndModel(PlayerStatusEnum.WON.getMessage());
+		} else if (PlayerStatusEnum.LOST == response.getPlayerStatusEnum()) {
+			model = getEndModel(PlayerStatusEnum.LOST.getMessage());
+		} else {
+			model = new ModelAndView("play");
+			int newValue = response.getValue();
+			request.getSession().setAttribute("currValue", newValue);
+			model.addObject("value", newValue);
+		}
 		return model;
 	}
-	
-	public PlayRequestAndResponse handlePlayForPlayerTwo(int value,  boolean firstRound, String inputChoice,Scanner scanner) {
+
+	public PlayRequestAndResponse handlePlayForPlayerTwo(int value, boolean firstRound, String inputChoice,
+			Scanner scanner) {
 		String inputType;
 		PlayRequestAndResponse response = new PlayRequestAndResponse();
 		if (firstRound) {
@@ -83,8 +124,8 @@ public class GameOfThreeService {
 		}
 		if (ChoicesEnum.AUTOMATIC.name().equalsIgnoreCase(inputType)) {
 			value = getAutomaticValue(value);
-			System.out.println("automatic generated out is "+value);
-		}else {
+			System.out.println("automatic generated out is " + value);
+		} else {
 			value = handleManualInput(value, scanner);
 		}
 		response.setValue(value);

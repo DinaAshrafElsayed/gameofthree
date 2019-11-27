@@ -97,13 +97,15 @@ public class GameOfThreeController {
 
 	@GetMapping({ "/receive" })
 	public ResponseEntity<?> recieveAValue(@RequestParam int value, @RequestParam boolean firstRound,
-			@RequestParam(required = false) String inputChoice) {
-		if (value == 1) {
+			@RequestParam(required = false) String inputChoice, @RequestParam boolean playerOneWon) {
+		PlayRequestAndResponse response = new PlayRequestAndResponse();
+		if (playerOneWon) {
 			System.out.println("you LOST");
-			return ResponseEntity.ok("");
+			return ResponseEntity.ok(response);
 		} else {
-			PlayRequestAndResponse response = gameOfThreeService.handlePlayForPlayerTwo(value, firstRound, inputChoice,
-					scanner);
+			response = gameOfThreeService.handlePlayForPlayerTwo(value, firstRound, inputChoice, scanner);
+			if (response.getValue() == 3)
+				System.out.println("you won");
 			return ResponseEntity.ok(response);
 		}
 	}

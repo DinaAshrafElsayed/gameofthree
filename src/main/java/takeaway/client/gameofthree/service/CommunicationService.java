@@ -88,7 +88,8 @@ public class CommunicationService {
 
 	}
 
-	public int play(String jwt, int value) {
+	public PlayRequestAndResponse play(String jwt, int value) {
+		ResponseEntity<PlayRequestAndResponse> response = null ;
 		try {
 			String URI = buildURI(playPath);
 			HttpHeaders headers = createHeaders(jwt);
@@ -96,13 +97,12 @@ public class CommunicationService {
 			PlayRequestAndResponse request = new PlayRequestAndResponse();
 			request.setValue(value);
 			HttpEntity<PlayRequestAndResponse> entity = new HttpEntity<>(request, headers);
-			ResponseEntity<PlayRequestAndResponse> response  = restTemplate.postForEntity(URI, entity,PlayRequestAndResponse.class);
-			value = response.getBody().getValue();
+			response  = restTemplate.postForEntity(URI, entity,PlayRequestAndResponse.class);
 		} catch (RestClientException e) {
 			// TODO handle communicationExecption
 			System.out.println("error " + e.getMessage());
 		}
-		return value;
+		return response.getBody();
 	}
 
 	public Set<String> getAvaliablePlayers(String jwt) {
